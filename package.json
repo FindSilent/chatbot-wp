@@ -1,5 +1,5 @@
 {
-  "name": "git-chatbox-geminiapi",
+  "name": "chatbot-wp",
   "version": "1.0.0",
   "scripts": {
     "dev": "vercel dev",
