@@ -4,9 +4,23 @@ const DEFAULT_MODEL = "gemini-2.0-flash"; // Fixed to gemini-2.0-flash
 import supabase from "../lib/supabase";
 
 // Hàm để thiết lập các tiêu đề CORS
-function setCorsHeaders(res) {
-  // Thay thế 'https://iseoai.com' bằng domain WordPress chính xác của bạn
-  res.setHeader('Access-Control-Allow-Origin', 'https://iseoai.com');
+// Hàm để thiết lập các tiêu đề CORS
+function setCorsHeaders(req, res) {
+  // Danh sách các domain được phép
+  const allowedOrigins = ['https://iseoai.com', 'https://webtietkiem.com']; // Thêm các domain khác vào đây
+
+  const origin = req.headers.origin; // Lấy domain của yêu cầu đến
+
+  // Kiểm tra xem domain của yêu cầu có trong danh sách được phép không
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    // Tùy chọn: Nếu domain không được phép, bạn có thể thiết lập một nguồn gốc mặc định
+    // hoặc không thiết lập tiêu đề Access-Control-Allow-Origin nào cả
+    // để chặn yêu cầu CORS từ nguồn gốc không hợp lệ.
+    // Ví dụ: res.setHeader('Access-Control-Allow-Origin', 'null'); // hoặc không làm gì cả
+  }
+
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS'); // Cho phép POST và OPTIONS
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Session-Id'); // Cho phép các header này
 }
