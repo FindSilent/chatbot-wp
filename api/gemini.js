@@ -4,10 +4,9 @@ const DEFAULT_MODEL = "gemini-2.0-flash"; // Fixed to gemini-2.0-flash
 import supabase from "../lib/supabase";
 
 // Hàm để thiết lập các tiêu đề CORS
-// Hàm để thiết lập các tiêu đề CORS
 function setCorsHeaders(req, res) {
   // Danh sách các domain được phép
-  const allowedOrigins = ['https://iseoai.com', 'https://webtietkiem.com']; // Thêm các domain khác vào đây
+  const allowedOrigins = ['https://iseoai.com', 'https://www.webtietkiem.com']; // Thêm các domain khác vào đây
 
   const origin = req.headers.origin; // Lấy domain của yêu cầu đến
 
