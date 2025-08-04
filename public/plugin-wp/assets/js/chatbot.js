@@ -5,6 +5,7 @@ const promptInput = document.getElementById("prompt");
 const imageInput = document.getElementById("imageInput");
 const fileNameSpan = document.getElementById("file-name");
 const toBottomBtn = document.getElementById("to-bottom-btn");
+const modelSelect = document.getElementById("model-select"); // Thêm dòng này
 const localKeyPrefix = "chat_history_";
 let history = [];
 
@@ -72,11 +73,15 @@ async function sendMessage() {
       const mimeType = imageFile.type;
       addMessage("You", prompt || "", false, imageData);
       thinking = addMessage("Bot", "<em>Thinking...</em>", true);
+		
+		// Lấy mô hình đã chọn từ dropdown
+		const selectedModel = modelSelect.value; 
 
       const body = {
         prompt: prompt || "",
         history,
-        image: { data: base64, mimeType }
+        image: { data: base64, mimeType },
+		model: selectedModel // Thêm model vào body
       };
 
       try {
@@ -110,10 +115,14 @@ async function sendMessage() {
   } else {
     addMessage("You", prompt, false);
     thinking = addMessage("Bot", "<em>Thinking...</em>", true);
+	  
+	// Lấy mô hình đã chọn từ dropdown
+	const selectedModel = modelSelect.value; 
 
     const body = {
       prompt,
       history,
+		model: selectedModel // Thêm model vào body
     };
 
     try {
@@ -190,11 +199,15 @@ function scrollToBottom() {
 }
 
 function updateToBottomButton() {
+  const messagesDiv = document.getElementById("messages"); // đúng ID từ HTML
+  const toBottomBtn = document.getElementById("to-bottom-btn");
+
+  if (!messagesDiv || !toBottomBtn) return; // kiểm tra an toàn
+
   const isAtBottom = messagesDiv.scrollHeight - messagesDiv.scrollTop <= messagesDiv.clientHeight + 10;
-  if (toBottomBtn) { // Thêm kiểm tra này để đảm bảo nút tồn tại
-    toBottomBtn.style.display = isAtBottom ? "none" : "block";
-  }
+  toBottomBtn.style.display = isAtBottom ? "none" : "block";
 }
+
 
 function newChat() {
   console.log('newChat called');
