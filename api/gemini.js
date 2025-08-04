@@ -1,6 +1,6 @@
 // gemini.js (trên Vercel của bạn)
 
-const DEFAULT_MODEL = "gemini-2.0-flash"; // Fixed to gemini-2.0-flash
+const DEFAULT_MODEL = "gemini-2.0-flash-lite"; // Fixed to gemini-2.0-flash
 import supabase from "../lib/supabase";
 
 // Hàm để thiết lập các tiêu đề CORS
