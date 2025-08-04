@@ -38,13 +38,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { prompt, history, image } = req.body;
+  const { prompt, history, image, model } = req.body;
 
   if (!prompt?.trim() && !image) {
     return res.status(400).json({ error: "Prompt or image is required" });
   }
 
-  const modelName = DEFAULT_MODEL;
+ // const modelName = DEFAULT_MODEL;
+  // Sử dụng model được gửi từ frontend, nếu không thì dùng mặc định
+  const modelName = model || "gemini-2.0-flash-lite"; 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: "Missing Gemini API key" });
