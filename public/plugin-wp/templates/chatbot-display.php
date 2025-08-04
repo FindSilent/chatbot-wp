@@ -2,6 +2,14 @@
   <div id="messages"></div>
   <button id="to-bottom-btn" onclick="scrollToBottom()">ꜜ &#42780;</button>
   <div class="input-container">
+    <select id="model-select">
+		<option value="gemini-2.0-pro" selected>gemini-2.0-pro</option>
+      <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+		<option value="gemini-2.5-flash-lite" selected>Gemini 2.5 Flash-Lite</option>
+      <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+		<option value="gemini-2.0-flash-lite" selected>Gemini 2.0 Flash Lite</option>
+      <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+      </select>
     <label class="file-upload">
       Upload
       <input type="file" id="imageInput" accept="image/png, image/jpeg, image/webp">
