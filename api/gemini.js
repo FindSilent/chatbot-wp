@@ -1,9 +1,11 @@
 // gemini.js (trên Vercel của bạn)
 
-const DEFAULT_MODEL = "gemini-1.5-flash"; // Đặt mô hình mặc định mới
+const DEFAULT_MODEL = "gemini-2.0-flash"; // Đặt mô hình mặc định mới
 const FALLBACK_MODELS = [
-  "gemini-1.5-pro", // Mô hình dự phòng 1
-  "gemini-2.0-flash-lite", // Mô hình dự phòng 2
+  "gemini-2.5-flash-lite", // Mô hình dự phòng 1
+  "gemini-2.5-flash", // Mô hình dự phòng 2
+  "gemini-2.0-flash-lite", // Mô hình dự phòng 3
+  "gemini-2.0-pro", // Mô hình dự phòng 4
 ];
 import supabase from "../lib/supabase";
 
