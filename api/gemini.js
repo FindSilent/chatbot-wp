@@ -9,7 +9,6 @@ const FALLBACK_MODELS = [
 ];
 import supabase from "../lib/supabase";
 
-// Hàm để thiết lập các tiêu đề CORS
 function setCorsHeaders(req, res) {
   const allowedOrigins = ['https://iseoai.com', 'https://www.webtietkiem.com'];
   const origin = req.headers.origin;
@@ -44,7 +43,23 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Missing Gemini API key" });
   }
 
-  const contents = Array.isArray(history) ? [...history] : [];
+  // Xử lý history để chuyển đổi trường image thành inlineData
+  const contents = Array.isArray(history) 
+    ? history.map(item => ({
+        role: item.role,
+        parts: item.parts.map(part => {
+          if (part.image) {
+            // Chuyển đổi trường image thành inlineData
+            const [_, mimeType, data] = part.image.match(/^data:(.+);base64,(.+)$/) || [];
+            return mimeType && data 
+              ? { inlineData: { mimeType, data } }
+              : { text: part.text || "[Invalid image]" };
+          }
+          return part;
+        })
+      }))
+    : [];
+
   const parts = [];
 
   if (image?.data && image?.mimeType) {
@@ -60,12 +75,18 @@ export default async function handler(req, res) {
     parts.push({ text: prompt.trim() });
   }
 
+  if (parts.length === 0) {
+    return res.status(400).json({ error: "No valid parts provided" });
+  }
+
   contents.push({ role: "user", parts });
 
   const modelsToTry = [model || DEFAULT_MODEL, ...FALLBACK_MODELS];
+  let lastError = null;
 
   for (const modelName of modelsToTry) {
     try {
+      console.log(`Trying model: ${modelName}`);
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
         {
@@ -77,20 +98,22 @@ export default async function handler(req, res) {
 
       const data = await response.json();
 
-      if (response.status === 429) { // 429: Too Many Requests (lỗi rate limit)
+      if (response.status === 429) {
         console.warn(`Quota exceeded for model ${modelName}. Trying next model.`);
-        continue; // Bỏ qua mô hình này và thử mô hình tiếp theo
+        lastError = `Quota exceeded for ${modelName}`;
+        continue;
       }
 
       if (!response.ok || !data?.candidates?.length) {
-        console.error(`Gemini API error for model ${modelName}:`, data?.error?.message || "No candidate response");
-        throw new Error(data?.error?.message || `No candidate response from ${modelName}`);
+        const errorMsg = data?.error?.message || `No candidate response from ${modelName}`;
+        console.error(`Gemini API error for model ${modelName}:`, errorMsg);
+        lastError = errorMsg;
+        throw new Error(errorMsg);
       }
 
       const reply = data.candidates[0]?.content?.parts?.[0]?.text ?? "[Gemini không có phản hồi]";
       console.log(`Successfully received reply from model: ${modelName}`);
 
-      // Xử lý Supabase
       await supabase.from("chats").insert([
         {
           session_id: req.headers["x-session-id"] || "anonymous",
@@ -102,11 +125,9 @@ export default async function handler(req, res) {
 
     } catch (err) {
       console.error(`Error with model ${modelName}:`, err.message);
-      // Nếu có lỗi khác ngoài 429, chúng ta vẫn có thể thử mô hình tiếp theo
-      // hoặc trả về lỗi nếu không có mô hình nào hoạt động
+      lastError = err.message;
     }
   }
 
-  // Nếu vòng lặp kết thúc mà không có mô hình nào thành công
-  return res.status(500).json({ error: "All available models failed to generate a response." });
+  return res.status(500).json({ error: `All available models failed to generate a response. Last error: ${lastError}` });
 }
