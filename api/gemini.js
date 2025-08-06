@@ -5,7 +5,6 @@ const FALLBACK_MODELS = [
   "gemini-2.5-flash-lite", // Mô hình dự phòng 1
   "gemini-2.5-flash", // Mô hình dự phòng 2
   "gemini-2.0-flash-lite", // Mô hình dự phòng 3
-  "gemini-2.0-pro", // Mô hình dự phòng 4
 ];
 import supabase from "../lib/supabase";
 
