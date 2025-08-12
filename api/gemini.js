@@ -35,15 +35,18 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Prompt or image is required" });
   }
 
-  // Kiểm tra định dạng history
+  // Kiểm tra và ghi log history
+  console.log("Received history:", JSON.stringify(history, null, 2));
   if (Array.isArray(history)) {
     for (const item of history) {
       if (!item.role || !Array.isArray(item.parts)) {
+        console.error("Invalid history format:", JSON.stringify(item, null, 2));
         return res.status(400).json({ error: "Invalid history format" });
       }
       for (const part of item.parts) {
-        if (!part.text && !part.image) {
-          return res.status(400).json({ error: "Invalid part in history: must contain text or image" });
+        if (!part.text && !part.image && !part.inlineData) {
+          console.error("Invalid part in history:", JSON.stringify(part, null, 2));
+          return res.status(400).json({ error: "Invalid part in history: must contain text, image, or inlineData" });
         }
       }
     }
@@ -59,7 +62,7 @@ export default async function handler(req, res) {
     ? history.map(item => ({
         role: item.role,
         parts: item.parts
-          .filter(part => part.text || part.image)
+          .filter(part => part.text || part.image || part.inlineData) // Loại bỏ part không hợp lệ
           .map(part => {
             if (part.image) {
               const [_, mimeType, data] = part.image.match(/^data:(.+);base64,(.+)$/) || [];
@@ -70,7 +73,7 @@ export default async function handler(req, res) {
                 return { text: "[Invalid image format]" };
               }
             }
-            return { text: part.text };
+            return part.inlineData ? { inlineData: part.inlineData } : { text: part.text };
           })
       }))
     : [];
@@ -96,7 +99,7 @@ export default async function handler(req, res) {
 
   contents.push({ role: "user", parts });
 
-  // Ghi log payload để debug
+  // Ghi log payload
   console.log("Payload being sent to Gemini API:", JSON.stringify(contents, null, 2));
 
   const modelsToTry = [model || DEFAULT_MODEL, ...FALLBACK_MODELS];
