@@ -1,10 +1,8 @@
-// gemini.js (trên Vercel của bạn)
-
-const DEFAULT_MODEL = "gemini-2.0-flash"; // Đặt mô hình mặc định mới
+const DEFAULT_MODEL = "gemini-2.0-flash";
 const FALLBACK_MODELS = [
-  "gemini-2.5-flash-lite", // Mô hình dự phòng 1
-  "gemini-2.5-flash", // Mô hình dự phòng 2
-  "gemini-2.0-flash-lite", // Mô hình dự phòng 3
+  "gemini-2.5-flash-lite",
+  "gemini-2.5-flash",
+  "gemini-2.0-flash-lite",
 ];
 import supabase from "../lib/supabase";
 
@@ -37,25 +35,43 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Prompt or image is required" });
   }
 
+  // Kiểm tra định dạng history
+  if (Array.isArray(history)) {
+    for (const item of history) {
+      if (!item.role || !Array.isArray(item.parts)) {
+        return res.status(400).json({ error: "Invalid history format" });
+      }
+      for (const part of item.parts) {
+        if (!part.text && !part.image) {
+          return res.status(400).json({ error: "Invalid part in history: must contain text or image" });
+        }
+      }
+    }
+  }
+
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: "Missing Gemini API key" });
   }
 
-  // Xử lý history để chuyển đổi trường image thành inlineData
+  // Xử lý history
   const contents = Array.isArray(history) 
     ? history.map(item => ({
         role: item.role,
-        parts: item.parts.map(part => {
-          if (part.image) {
-            // Chuyển đổi trường image thành inlineData
-            const [_, mimeType, data] = part.image.match(/^data:(.+);base64,(.+)$/) || [];
-            return mimeType && data 
-              ? { inlineData: { mimeType, data } }
-              : { text: part.text || "[Invalid image]" };
-          }
-          return part;
-        })
+        parts: item.parts
+          .filter(part => part.text || part.image)
+          .map(part => {
+            if (part.image) {
+              const [_, mimeType, data] = part.image.match(/^data:(.+);base64,(.+)$/) || [];
+              if (mimeType && data) {
+                return { inlineData: { mimeType, data } };
+              } else {
+                console.warn(`Skipping invalid image in history: ${part.image}`);
+                return { text: "[Invalid image format]" };
+              }
+            }
+            return { text: part.text };
+          })
       }))
     : [];
 
@@ -79,6 +95,9 @@ export default async function handler(req, res) {
   }
 
   contents.push({ role: "user", parts });
+
+  // Ghi log payload để debug
+  console.log("Payload being sent to Gemini API:", JSON.stringify(contents, null, 2));
 
   const modelsToTry = [model || DEFAULT_MODEL, ...FALLBACK_MODELS];
   let lastError = null;
